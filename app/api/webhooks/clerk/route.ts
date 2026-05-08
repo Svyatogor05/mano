@@ -34,11 +34,13 @@ export async function POST(req: Request) {
   if (evt.type === "user.created") {
     const { id, email_addresses, first_name, last_name, image_url } = evt.data;
     await supabase.from("users").insert({
-      clerk_id: id,
-      email: email_addresses[0].email_address,
-      name: `${first_name || ""} ${last_name || ""}`.trim(),
-      avatar_url: image_url,
-    });
+  clerk_id: id,
+  email: email_addresses[0].email_address,
+  name: `${first_name || ""} ${last_name || ""}`.trim(),
+  avatar_url: image_url,
+  role: "student",
+  created_at: new Date().toISOString(),
+});
   }
 
   return new Response("OK", { status: 200 });
