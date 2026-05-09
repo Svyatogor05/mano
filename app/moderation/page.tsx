@@ -20,10 +20,10 @@ export default async function ModerationPage() {
 
   // Получаем курсы на проверку
   const { data: courses } = await supabaseAdmin
-    .from("courses")
-    .select("*, users(name, email)")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
+  .from("courses")
+  .select("*, users!courses_teacher_id_fkey(name, email)")
+  .eq("status", "pending")
+  .order("created_at", { ascending: false });
 
   return (
     <main className="min-h-screen bg-[#030303] text-white">
