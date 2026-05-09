@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const { title, description, price, category, level } = body;
 
   // Получаем пользователя из Supabase
-  const { data: user } = await supabase
+  const { data: user } = await supabaseAdmin
     .from("users")
     .select("id, role")
     .eq("clerk_id", userId)
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
   // Обычный автор — только 1 курс
   if (user.role === "author") {
-    const { count } = await supabase
+    const { count } = await supabaseAdmin
       .from("courses")
       .select("*", { count: "exact", head: true })
       .eq("teacher_id", user.id);
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const { data, error } = await supabase.from("courses").insert({
+  const { data, error } = await supabaseAdmin.from("courses").insert({
     title,
     description,
     price,

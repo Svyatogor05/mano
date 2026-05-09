@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const CATEGORIES = ["Все", "Программирование", "Маркетинг", "Финансы", "Дизайн", "Бизнес"];
 
@@ -9,7 +9,7 @@ export default async function CoursesPage() {
   const { userId } = await auth();
 
 
- const { data: courses } = await supabase
+ const { data: courses } = await supabaseAdmin
     .from("courses")
     .select("*, users(name, avatar_url)")
     .eq("status", "approved")

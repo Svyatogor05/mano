@@ -1,14 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export default async function ModerationPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
   // Проверяем роль
-  const { data: user } = await supabase
+  const { data: user } = await supabaseAdmin
     .from("users")
     .select("role")
     .eq("clerk_id", userId)
@@ -19,7 +19,7 @@ export default async function ModerationPage() {
   }
 
   // Получаем курсы на проверку
-  const { data: courses } = await supabase
+  const { data: courses } = await supabaseAdmin
     .from("courses")
     .select("*, users(name, email)")
     .eq("status", "pending")
