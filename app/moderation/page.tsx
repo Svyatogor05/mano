@@ -19,11 +19,13 @@ export default async function ModerationPage() {
   }
 
   // Получаем курсы на проверку
-  const { data: courses } = await supabaseAdmin
+  const { data: courses, error } = await supabaseAdmin
   .from("courses")
-  .select("*, users!courses_teacher_id_fkey(name, email)")
+  .select("*")
   .eq("status", "pending")
   .order("created_at", { ascending: false });
+
+console.log("courses:", courses, "error:", error);
 
   return (
     <main className="min-h-screen bg-[#030303] text-white">
@@ -59,7 +61,7 @@ export default async function ModerationPage() {
                     <h3 className="text-xl font-bold mb-1">{course.title}</h3>
                     <p className="text-gray-400 text-sm mb-2">{course.description}</p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>Автор: {course.users?.name}</span>
+                      <span>Автор: {course.teacher_id}</span>
                       <span>Категория: {course.category}</span>
                       <span>Уровень: {course.level}</span>
                       <span className="text-white font-bold">{Number(course.price).toLocaleString("ru")} ₽</span>
