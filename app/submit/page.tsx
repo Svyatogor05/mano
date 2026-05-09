@@ -1,11 +1,41 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 
-export default async function SubmitPage() {
-  const user = await currentUser();
-  if (!user) redirect("/sign-in");
+export default function SubmitPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    price: "",
+    category: "Программирование",
+    level: "beginner",
+  });
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, price: Number(form.price) }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Ошибка при отправке");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch {
+      setError("Ошибка сети");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#030303] text-white">
@@ -13,69 +43,84 @@ export default async function SubmitPage() {
         <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent">
           Mano
         </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-sm text-gray-300 hover:text-white transition">
-            Мой кабинет
-          </Link>
-          <UserButton />
-        </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-8 py-12">
-        <h1 className="text-4xl font-bold mb-2">Предложить курс</h1>
-        <p className="text-gray-400 mb-10">Выберите подходящий план размещения</p>
+      <div className="max-w-2xl mx-auto px-8 py-12">
+        <h1 className="text-3xl font-bold mb-2">Предложить курс</h1>
+        <p className="text-gray-400 mb-8">Заполните форму — модератор проверит и опубликует курс</p>
 
-        {/* Тарифы */}
-        <div className="grid grid-cols-2 gap-6 mb-12">
-          {/* Одиночный курс */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-purple-500/40 transition">
-            <div className="text-sm text-gray-400 mb-2">Базовый</div>
-            <div className="text-3xl font-bold mb-1">Бесплатно</div>
-            <div className="text-gray-500 text-sm mb-6">Один курс на проверку</div>
-            <ul className="space-y-3 mb-8 text-sm text-gray-300">
-              {[
-                "Размещение 1 курса",
-                "Стандартная проверка 5-7 дней",
-                "Базовая страница курса",
-                "Доступ к статистике продаж",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <span className="text-purple-400">✓</span> {item}
-                </li>
-              ))}
-            </ul>
-            <Link href="/submit/single" className="block w-full text-center py-3 border border-purple-600/50 hover:border-purple-400 rounded-xl text-sm font-semibold transition text-purple-300">
-              Подать заявку
-            </Link>
+        {error && (
+          <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-4 mb-6 text-red-300">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Название курса *</label>
+            <input
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500"
+              placeholder="Например: Python для начинающих"
+              value={form.title}
+              onChange={e => setForm({...form, title: e.target.value})}
+            />
           </div>
 
-          {/* Подписка автора */}
-          <div className="bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border border-purple-500/50 rounded-2xl p-6 relative">
-            <div className="absolute top-4 right-4 bg-purple-600 text-xs px-2 py-1 rounded-full font-semibold">
-              Популярно
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Описание *</label>
+            <textarea
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 h-32 resize-none"
+              placeholder="Что научится делать студент?"
+              value={form.description}
+              onChange={e => setForm({...form, description: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Цена (₽) *</label>
+              <input
+                type="number"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500"
+                placeholder="2990"
+                value={form.price}
+                onChange={e => setForm({...form, price: e.target.value})}
+              />
             </div>
-            <div className="text-sm text-purple-300 mb-2">Подписка автора</div>
-            <div className="text-3xl font-bold mb-1">4 599 ₽<span className="text-lg text-gray-400 font-normal">/мес</span></div>
-            <div className="text-gray-500 text-sm mb-6">Неограниченные возможности</div>
-            <ul className="space-y-3 mb-8 text-sm text-gray-300">
-              {[
-                "Неограниченное количество курсов",
-                "Приоритетная проверка 24-48 часов",
-                "Расширенная страница автора",
-                "Продвинутая аналитика и отчёты",
-                "Значок верифицированного автора",
-                "Приоритет в поиске и каталоге",
-                "Поддержка персонального менеджера",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2">
-                  <span className="text-purple-400">✓</span> {item}
-                </li>
-              ))}
-            </ul>
-            <Link href="/submit/pro" className="block w-full text-center py-3 bg-purple-600 hover:bg-purple-700 rounded-xl text-sm font-semibold transition">
-              Стать автором Pro
-            </Link>
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Категория</label>
+              <select
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+                value={form.category}
+                onChange={e => setForm({...form, category: e.target.value})}
+              >
+                {["Программирование", "Маркетинг", "Финансы", "Дизайн", "Бизнес"].map(c => (
+                  <option key={c} value={c} className="bg-[#030303]">{c}</option>
+                ))}
+              </select>
+            </div>
           </div>
+
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Уровень</label>
+            <select
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-purple-500"
+              value={form.level}
+              onChange={e => setForm({...form, level: e.target.value})}
+            >
+              <option value="beginner" className="bg-[#030303]">Начинающий</option>
+              <option value="intermediate" className="bg-[#030303]">Средний</option>
+              <option value="advanced" className="bg-[#030303]">Продвинутый</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !form.title || !form.price}
+            className="w-full py-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold transition"
+          >
+            {loading ? "Отправляем..." : "Отправить на проверку →"}
+          </button>
         </div>
       </div>
     </main>
