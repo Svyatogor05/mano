@@ -1,6 +1,34 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
+
+async function getOrCreateUser(userId: string) {
+  // Пробуем найти пользователя
+  const { data: user } = await supabaseAdmin
+    .from("users")
+    .select("id, role")
+    .eq("clerk_id", userId)
+    .single();
+
+  if (user) return user;
+
+  // Если нет — создаём через Clerk API
+  const clerkUser = await currentUser();
+  if (!clerkUser) return null;
+
+  const { data: newUser } = await supabaseAdmin
+    .from("users")
+    .insert({
+      clerk_id: userId,
+      email: clerkUser.emailAddresses[0]?.emailAddress || "",
+      name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "Без имени",
+      role: "student",
+    })
+    .select("id, role")
+    .single();
+
+  return newUser;
+}
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -9,21 +37,13 @@ export async function POST(req: Request) {
   const body = await req.json();
   const { title, description, price, category, level } = body;
 
-  const { data: user } = await supabaseAdmin
-    .from("users")
-    .select("id, role")
-    .eq("clerk_id", userId)
-    .single();
-
+  const user = await getOrCreateUser(userId);
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  // Модераторы и выше не ограничены
-  const isPrivileged = ["moderator", "admin", "owner"].includes(user.role);
-  const isPro = user.role === "author_pro";
-  const isAuthor = user.role === "author";
   const isStudent = user.role === "student";
+  const isAuthor = user.role === "author";
 
-  // Студент автоматически становится автором при подаче курса
+  // Студент автоматически становится автором
   if (isStudent) {
     await supabaseAdmin
       .from("users")
@@ -40,8 +60,8 @@ export async function POST(req: Request) {
       .eq("teacher_id", user.id);
 
     if (count && count >= 1) {
-      return NextResponse.json({ 
-        error: "Бесплатный автор может выставить только 1 курс. Купите Author Pro для неограниченного количества курсов.",
+      return NextResponse.json({
+        error: "Бесплатный автор может выставить только 1 курс. Купите Author Pro для неограниченного количества.",
         code: "UPGRADE_REQUIRED"
       }, { status: 403 });
     }

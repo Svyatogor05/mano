@@ -3,16 +3,36 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { supabaseAdmin } from "@/lib/supabase";
+import { currentUser } from "@clerk/nextjs/server";
 
 export default async function ProfilePage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const { data: user } = await supabaseAdmin
-    .from("users")
-    .select("*")
-    .eq("clerk_id", userId)
-    .single();
+  // Получаем или создаём пользователя
+let { data: user } = await supabaseAdmin
+  .from("users")
+  .select("*")
+  .eq("clerk_id", userId)
+  .single();
+
+if (!user) {
+  const { currentUser } = await import("@clerk/nextjs/server");
+  const clerkUser = await currentUser();
+  if (clerkUser) {
+    const { data: newUser } = await supabaseAdmin
+      .from("users")
+      .insert({
+        clerk_id: userId,
+        email: clerkUser.emailAddresses[0]?.emailAddress || "",
+        name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "Без имени",
+        role: "student",
+      })
+      .select("*")
+      .single();
+    user = newUser;
+  }
+}
 
   const { data: purchasedCourses } = await supabaseAdmin
     .from("purchases")
