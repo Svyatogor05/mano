@@ -60,7 +60,7 @@ if (!user) {
   const totalRevenue = coursesWithSales.reduce((sum, c) => sum + c.sales * Number(c.price), 0);
 
   const roleLabels: Record<string, string> = {
-    student: "Студент", author: "Автор", author_pro: "Автор Pro",
+    student: "Пользователь", author: "Автор", author_pro: "Автор Pro",
     moderator: "Модератор", admin: "Администратор", owner: "Владелец",
   };
 
