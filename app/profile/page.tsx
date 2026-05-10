@@ -106,6 +106,17 @@ if (!user) {
                   ⭐ Pro
                 </span>
               )}
+              {["admin", "owner"].includes(user?.role) && (
+  <Link href="/admin" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+    ⚙️ Панель управления
+  </Link>
+)}
+{["moderator", "admin", "owner"].includes(user?.role) && (
+  <Link href="/moderation" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+    🛡️ Модерация
+  </Link>
+)}
+
             </div>
           </div>
           {!isPro && (
