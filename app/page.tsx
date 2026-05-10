@@ -8,12 +8,11 @@ const CATEGORIES = ["Все", "Программирование", "Маркет�
 export default async function CoursesPage() {
   const { userId } = await auth();
 
-
- const { data: courses } = await supabaseAdmin
-  .from("courses")
-  .select("*")
-  .eq("status", "approved")
-  .eq("is_published", true);
+  const { data: courses } = await supabaseAdmin
+    .from("courses")
+    .select("*")
+    .eq("status", "approved")
+    .eq("is_published", true);
 
   return (
     <main className="min-h-screen bg-[#030303] text-white">
@@ -32,9 +31,14 @@ export default async function CoursesPage() {
               </Link>
             </>
           ) : (
-            <Link href="/dashboard" className="text-sm text-gray-300 hover:text-white transition">
-              Мой кабинет
-            </Link>
+            <>
+              <Link href="/dashboard" className="text-sm text-gray-300 hover:text-white transition">
+                Мой кабинет
+              </Link>
+              <Link href="/profile" className="text-sm text-gray-300 hover:text-white transition">
+                Профиль
+              </Link>
+            </>
           )}
           <Link href="/submit" className="px-4 py-2 text-sm bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg transition text-white font-medium">
             Предложить курс
@@ -88,7 +92,6 @@ export default async function CoursesPage() {
                     <span className="text-xs bg-white/5 text-gray-400 px-2 py-1 rounded-full">{course.level}</span>
                   </div>
                   <h3 className="font-bold text-lg mb-1 group-hover:text-purple-300 transition">{course.title}</h3>
-                  <p className="text-gray-500 text-sm mb-4">{course.users?.name}</p>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-2xl font-bold">{Number(course.price).toLocaleString("ru")} ₽</span>
                   </div>
