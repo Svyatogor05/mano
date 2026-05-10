@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { supabaseAdmin } from "@/lib/supabase";
-import { currentUser } from "@clerk/nextjs/server";
 
 export default async function ProfilePage() {
   const { userId } = await auth();
