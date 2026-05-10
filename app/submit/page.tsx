@@ -7,6 +7,7 @@ export default function SubmitPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isUpgradeError, setIsUpgradeError] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -18,6 +19,7 @@ export default function SubmitPage() {
   const handleSubmit = async () => {
     setLoading(true);
     setError("");
+    setIsUpgradeError(false);
     try {
       const res = await fetch("/api/courses", {
         method: "POST",
@@ -26,9 +28,12 @@ export default function SubmitPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.code === "UPGRADE_REQUIRED") {
+          setIsUpgradeError(true);
+        }
         setError(data.error || "Ошибка при отправке");
       } else {
-        router.push("/dashboard");
+        router.push("/profile");
       }
     } catch {
       setError("Ошибка сети");
@@ -43,6 +48,9 @@ export default function SubmitPage() {
         <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent">
           Mano
         </Link>
+        <Link href="/profile" className="text-sm text-gray-400 hover:text-white transition">
+          ← Профиль
+        </Link>
       </nav>
 
       <div className="max-w-2xl mx-auto px-8 py-12">
@@ -50,8 +58,16 @@ export default function SubmitPage() {
         <p className="text-gray-400 mb-8">Заполните форму — модератор проверит и опубликует курс</p>
 
         {error && (
-          <div className="bg-red-900/30 border border-red-500/50 rounded-xl p-4 mb-6 text-red-300">
-            {error}
+          <div className={`rounded-xl p-4 mb-6 ${isUpgradeError
+            ? "bg-yellow-900/20 border border-yellow-500/30 text-yellow-300"
+            : "bg-red-900/30 border border-red-500/50 text-red-300"
+          }`}>
+            <p className="mb-2">{error}</p>
+            {isUpgradeError && (
+              <Link href="/profile" className="inline-block mt-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-lg text-sm font-bold text-white transition">
+                ⭐ Купить Author Pro
+              </Link>
+            )}
           </div>
         )}
 
