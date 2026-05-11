@@ -11,7 +11,6 @@ export default async function CoursePage({ params }: { params: { id: string } })
     .from("courses")
     .select("*, users!courses_teacher_id_fkey(name, email)")
     .eq("id", params.id)
-    .eq("status", "approved")
     .single();
 
   if (!course) redirect("/");
