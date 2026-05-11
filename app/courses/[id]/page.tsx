@@ -8,11 +8,11 @@ export default async function CoursePage({ params }: { params: { id: string } })
   const { userId } = await auth();
 
   const { data: course } = await supabaseAdmin
-    .from("courses")
-    .select("*, users!courses_teacher_id_fkey(name, email)")
-    .eq("id", params.id)
-    .single();
-
+  .from("courses")
+  .select("*")
+  .eq("id", params.id)
+  .single();
+  
   if (!course) redirect("/");
 
   // Проверяем куплен ли курс
