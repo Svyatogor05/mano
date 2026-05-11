@@ -24,7 +24,16 @@ export default async function CourseReviewPage({ params }: { params: { id: strin
     .eq("id", params.id)
     .single();
 
-  if (!course) redirect("/moderation");
+  if (!course) {
+  return (
+    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div>
+        <h1>Курс не найден</h1>
+        <p>ID: {params.id}</p>
+      </div>
+    </div>
+  );
+}
 
   const statusConfig: Record<string, { label: string; color: string }> = {
     pending: { label: "На проверке", color: "bg-yellow-600/20 text-yellow-300 border-yellow-500/20" },
