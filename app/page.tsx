@@ -78,7 +78,7 @@ export default async function CoursesPage() {
         ) : (
           <div className="grid grid-cols-3 gap-6">
             {courses.map((course) => (
-              <div key={course.id} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/40 transition group">
+              <Link key={course.id} href={`/courses/${course.id}`} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/40 transition group block">
                 <div className="h-40 bg-gradient-to-br from-purple-900/50 to-indigo-900/50 flex items-center justify-center">
                   {course.thumbnail_url ? (
                     <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
@@ -92,20 +92,13 @@ export default async function CoursesPage() {
                     <span className="text-xs bg-white/5 text-gray-400 px-2 py-1 rounded-full">{course.level}</span>
                   </div>
                   <h3 className="font-bold text-lg mb-1 group-hover:text-purple-300 transition">{course.title}</h3>
-                  <div className="flex items-center justify-between mb-4">
+                  <p className="text-gray-500 text-sm mb-3">{course.description}</p>
+                  <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold">{Number(course.price).toLocaleString("ru")} ₽</span>
+                    <span className="text-sm text-purple-400">Подробнее →</span>
                   </div>
-                  {!userId ? (
-                    <Link href="/sign-up" className="block w-full text-center py-2.5 border border-purple-600/50 hover:border-purple-400 rounded-xl text-sm font-semibold transition text-purple-300">
-                      Войдите чтобы купить
-                    </Link>
-                  ) : (
-                    <Link href={`/courses/${course.id}`} className="block w-full text-center py-2.5 bg-purple-600 hover:bg-purple-700 rounded-xl text-sm font-semibold transition">
-                      Купить курс
-                    </Link>
-                  )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
