@@ -68,29 +68,29 @@ export async function POST(req: Request) {
   }
 
   const { data, error } = await supabaseAdmin
-    .from("courses")
-    .insert({
-      title,
-      description,
-      price,
-      category,
-      level,
-      teacher_id: user.id,
-      status: "pending",
-      is_published: false,
-      full_description: body.full_description,
-course_url: body.course_url,
-telegram_url: body.telegram_url,
-promo_video_url: body.promo_video_url,
-what_you_learn: body.what_you_learn,
-requirements: body.requirements,
-certificate: body.has_certificate ? body.certificate : null,
-duration: body.duration,
-lessons_count: body.lessons_count ? Number(body.lessons_count) : null,
-language: body.language,
-    })
-    .select()
-    .single();
+  .from("courses")
+  .insert({
+    title,
+    description: body.description,
+    full_description: body.full_description,
+    price: body.price,
+    category: body.category,
+    level: body.level,
+    teacher_id: user.id,
+    status: "pending",
+    is_published: false,
+    course_url: body.course_url,
+    telegram_url: body.telegram_url,
+    promo_video_url: body.promo_video_url,
+    what_you_learn: body.what_you_learn,
+    requirements: body.requirements,
+    certificate: body.has_certificate ? body.certificate : null,
+    duration: body.duration,
+    lessons_count: body.lessons_count ? Number(body.lessons_count) : null,
+    language: body.language || "Русский",
+  })
+  .select()
+  .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
