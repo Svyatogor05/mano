@@ -3,35 +3,35 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { supabaseAdmin } from "@/lib/supabase";
+import ProButton from "./ProButton";
 
 export default async function ProfilePage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  // Получаем или создаём пользователя
-let { data: user } = await supabaseAdmin
-  .from("users")
-  .select("*")
-  .eq("clerk_id", userId)
-  .single();
+  let { data: user } = await supabaseAdmin
+    .from("users")
+    .select("*")
+    .eq("clerk_id", userId)
+    .single();
 
-if (!user) {
-  const { currentUser } = await import("@clerk/nextjs/server");
-  const clerkUser = await currentUser();
-  if (clerkUser) {
-    const { data: newUser } = await supabaseAdmin
-      .from("users")
-      .insert({
-        clerk_id: userId,
-        email: clerkUser.emailAddresses[0]?.emailAddress || "",
-        name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "Без имени",
-        role: "student",
-      })
-      .select("*")
-      .single();
-    user = newUser;
+  if (!user) {
+    const { currentUser } = await import("@clerk/nextjs/server");
+    const clerkUser = await currentUser();
+    if (clerkUser) {
+      const { data: newUser } = await supabaseAdmin
+        .from("users")
+        .insert({
+          clerk_id: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress || "",
+          name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "Без имени",
+          role: "student",
+        })
+        .select("*")
+        .single();
+      user = newUser;
+    }
   }
-}
 
   const { data: purchasedCourses } = await supabaseAdmin
     .from("purchases")
@@ -44,7 +44,6 @@ if (!user) {
     .eq("teacher_id", user?.id)
     .order("created_at", { ascending: false });
 
-  // Считаем продажи для каждого курса автора
   const coursesWithSales = await Promise.all(
     (myCourses || []).map(async (course) => {
       const { count } = await supabaseAdmin
@@ -97,7 +96,7 @@ if (!user) {
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-1">{user?.name || "Без имени"}</h1>
             <p className="text-gray-400 text-sm mb-3">{user?.email}</p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs bg-purple-600/20 text-purple-300 px-3 py-1 rounded-full border border-purple-500/20">
                 {roleLabels[user?.role] || user?.role}
               </span>
@@ -107,29 +106,26 @@ if (!user) {
                 </span>
               )}
               {["admin", "owner"].includes(user?.role) && (
-  <Link href="/admin" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
-    ⚙️ Панель управления
-  </Link>
-)}
-{["moderator", "admin", "owner"].includes(user?.role) && (
-  <Link href="/moderation" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
-    🛡️ Модерация
-  </Link>
-)}
-
+                <Link href="/admin" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+                  ⚙️ Панель управления
+                </Link>
+              )}
+              {["moderator", "admin", "owner"].includes(user?.role) && (
+                <Link href="/moderation" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+                  🛡️ Модерация
+                </Link>
+              )}
             </div>
           </div>
           {!isPro && (
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <div className="text-xs text-gray-500 mb-2">Расширенная аналитика и приоритет</div>
-              <button className="px-5 py-2.5 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-xl text-sm font-bold transition">
-                ⭐ Автор Pro
-              </button>
+              <ProButton />
             </div>
           )}
         </div>
 
-        {/* Купленные курсы — широкий баннер */}
+        {/* Купленные курсы */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-purple-500/30 transition">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -164,7 +160,6 @@ if (!user) {
             </Link>
           </div>
 
-          {/* Сводная статистика автора */}
           {isAuthor && coursesWithSales.length > 0 && (
             <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -210,8 +205,6 @@ if (!user) {
                         <span className="text-white font-semibold">{Number(course.price).toLocaleString("ru")} ₽</span>
                       </div>
                     </div>
-
-                    {/* Статистика курса */}
                     {course.status === "approved" && (
                       <div className="flex gap-6 ml-6 text-right">
                         <div>
@@ -228,9 +221,9 @@ if (!user) {
                           <div className="flex items-center">
                             <div className="text-center">
                               <div className="text-xs text-gray-500 mb-1">Детальная аналитика</div>
-                              <button className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-600/30 to-orange-600/30 border border-yellow-500/30 text-yellow-300 rounded-lg hover:from-yellow-600/50 hover:to-orange-600/50 transition">
+                              <span className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-600/30 to-orange-600/30 border border-yellow-500/30 text-yellow-300 rounded-lg">
                                 ⭐ Pro
-                              </button>
+                              </span>
                             </div>
                           </div>
                         )}
@@ -249,7 +242,7 @@ if (!user) {
           )}
         </div>
 
-        {/* Блок Pro если не Pro */}
+        {/* Блок Pro */}
         {!isPro && (
           <div className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-500/20 rounded-2xl p-8">
             <div className="flex items-center justify-between">
@@ -264,10 +257,8 @@ if (!user) {
                 </ul>
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold mb-1">990 ₽<span className="text-gray-400 text-lg">/мес</span></div>
-                <button className="px-8 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 rounded-xl font-bold transition">
-                  Подключить Pro
-                </button>
+                <div className="text-3xl font-bold mb-3">4 490 ₽<span className="text-gray-400 text-lg">/мес</span></div>
+                <ProButton />
               </div>
             </div>
           </div>
