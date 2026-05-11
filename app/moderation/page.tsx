@@ -7,7 +7,6 @@ export default async function ModerationPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  // Проверяем роль
   const { data: user } = await supabaseAdmin
     .from("users")
     .select("role")
@@ -18,14 +17,11 @@ export default async function ModerationPage() {
     redirect("/dashboard");
   }
 
-  // Получаем курсы на проверку
-  const { data: courses, error } = await supabaseAdmin
-  .from("courses")
-  .select("*")
-  .eq("status", "pending")
-  .order("created_at", { ascending: false });
-
-console.log("courses:", courses, "error:", error);
+  const { data: courses } = await supabaseAdmin
+    .from("courses")
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
 
   return (
     <main className="min-h-screen bg-[#030303] text-white">
@@ -33,8 +29,8 @@ console.log("courses:", courses, "error:", error);
         <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent">
           Mano
         </Link>
-        <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white transition">
-          ← Дашборд
+        <Link href="/profile" className="text-sm text-gray-400 hover:text-white transition">
+          ← Профиль
         </Link>
       </nav>
 
@@ -61,13 +57,16 @@ console.log("courses:", courses, "error:", error);
                     <h3 className="text-xl font-bold mb-1">{course.title}</h3>
                     <p className="text-gray-400 text-sm mb-2">{course.description}</p>
                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>Автор: {course.teacher_id}</span>
                       <span>Категория: {course.category}</span>
                       <span>Уровень: {course.level}</span>
                       <span className="text-white font-bold">{Number(course.price).toLocaleString("ru")} ₽</span>
                     </div>
                   </div>
-                  <div className="flex gap-3 ml-6">
+                  <div className="flex gap-3 ml-6 items-center">
+                    <Link href={`/moderation/course/${course.id}`}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-sm font-medium transition">
+                      👁 Просмотр
+                    </Link>
                     <ApproveButton courseId={course.id} />
                     <RejectButton courseId={course.id} />
                   </div>
