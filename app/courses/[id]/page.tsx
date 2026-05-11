@@ -17,8 +17,7 @@ export default async function CoursePage({ params }: { params: { id: string } })
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Курс не найден</h1>
-          <p className="text-gray-400">ID: {params.id}</p>
-          <p className="text-red-400">{error?.message}</p>
+          <p className="text-red-400 text-sm">{error?.message}</p>
           <Link href="/" className="mt-4 inline-block text-purple-400">← Назад</Link>
         </div>
       </div>
