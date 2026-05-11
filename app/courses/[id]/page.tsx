@@ -3,13 +3,14 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { supabaseAdmin } from "@/lib/supabase";
 
-export default async function CoursePage({ params }: { params: { id: string } }) {
+export default async function CoursePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { userId } = await auth();
 
   const { data: course, error } = await supabaseAdmin
     .from("courses")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!course || error) {
