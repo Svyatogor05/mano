@@ -1,11 +1,24 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase";
+import DeleteCourseButton from "@/components/DeleteCourseButton";
 
 const CATEGORIES = ["Все", "Программирование", "Маркетинг", "Финансы", "Дизайн", "Бизнес"];
 
 export default async function CoursesPage() {
   const { userId } = await auth();
+
+  let userRole: string | null = null;
+  if (userId) {
+    const { data: user } = await supabaseAdmin
+      .from("users")
+      .select("role")
+      .eq("clerk_id", userId)
+      .single();
+    userRole = user?.role ?? null;
+  }
+
+  const canDelete = userRole === "owner" || userRole === "admin";
 
   const { data: courses } = await supabaseAdmin
     .from("courses")
@@ -78,27 +91,30 @@ export default async function CoursesPage() {
         ) : (
           <div className="grid grid-cols-3 gap-6">
             {courses.map((course) => (
-              <Link key={course.id} href={`/courses/${course.id}`} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/40 transition group block">
-                <div className="h-40 bg-gradient-to-br from-purple-900/50 to-indigo-900/50 flex items-center justify-center">
-                  {course.thumbnail_url ? (
-                    <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-5xl">📚</div>
-                  )}
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs bg-purple-600/20 text-purple-300 px-2 py-1 rounded-full">{course.category}</span>
-                    <span className="text-xs bg-white/5 text-gray-400 px-2 py-1 rounded-full">{course.level}</span>
+              <div key={course.id} className="relative">
+                {canDelete && <DeleteCourseButton courseId={course.id} />}
+                <Link href={`/courses/${course.id}`} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-purple-500/40 transition group block">
+                  <div className="h-40 bg-gradient-to-br from-purple-900/50 to-indigo-900/50 flex items-center justify-center">
+                    {course.thumbnail_url ? (
+                      <img src={course.thumbnail_url} alt={course.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="text-5xl">📚</div>
+                    )}
                   </div>
-                  <h3 className="font-bold text-lg mb-1 group-hover:text-purple-300 transition">{course.title}</h3>
-                  <p className="text-gray-500 text-sm mb-3">{course.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold">{Number(course.price).toLocaleString("ru")} ₽</span>
-                    <span className="text-sm text-purple-400">Подробнее →</span>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs bg-purple-600/20 text-purple-300 px-2 py-1 rounded-full">{course.category}</span>
+                      <span className="text-xs bg-white/5 text-gray-400 px-2 py-1 rounded-full">{course.level}</span>
+                    </div>
+                    <h3 className="font-bold text-lg mb-1 group-hover:text-purple-300 transition">{course.title}</h3>
+                    <p className="text-gray-500 text-sm mb-3">{course.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold">{Number(course.price).toLocaleString("ru")} ₽</span>
+                      <span className="text-sm text-purple-400">Подробнее →</span>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             ))}
           </div>
         )}
