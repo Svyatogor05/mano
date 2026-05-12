@@ -48,23 +48,26 @@ export default async function CoursesPage() {
           Mano<span className="inline-block w-[7px] h-[7px] rounded-full bg-[#6c5ce7] ml-[3px] mb-[3px] align-middle" />
         </Link>
         <div className="flex items-center gap-4">
-          {userId ? (
-            <Link href="/profile" className="text-sm text-white/40 hover:text-white/70 transition">
-              Мой кабинет
-            </Link>
-          ) : null}
-          {!userId ? (
-            <Link href="/sign-in" className="text-sm font-medium px-5 py-2 rounded-lg bg-[#6c5ce7] hover:bg-[#5b4fd4] text-white transition">
-              Войти
-            </Link>
-          ) : (
-            <Link href="/profile" className="w-8 h-8 rounded-full bg-white/10 border border-white/15 hover:border-purple-500/40 transition flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-              </svg>
-            </Link>
-          )}
-        </div>
+  {userId ? (
+    <Link href="/profile" className="text-sm text-white/40 hover:text-white/70 transition">
+      Мой кабинет
+    </Link>
+  ) : null}
+  <Link href="/submit" className="text-sm text-white/50 hover:text-white/80 border border-white/10 hover:border-white/20 px-4 py-2 rounded-lg transition">
+    Предложить курс
+  </Link>
+  {!userId ? (
+    <Link href="/sign-in" className="text-sm font-medium px-5 py-2 rounded-lg bg-[#6c5ce7] hover:bg-[#5b4fd4] text-white transition">
+      Войти
+    </Link>
+  ) : (
+    <Link href="/profile" className="w-8 h-8 rounded-full bg-white/10 border border-white/15 hover:border-purple-500/40 transition flex items-center justify-center">
+      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+      </svg>
+    </Link>
+  )}
+</div>
       </nav>
 
       <div className="max-w-7xl mx-auto px-7">
