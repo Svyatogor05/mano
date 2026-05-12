@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { supabaseAdmin } from "@/lib/supabase";
+import DeleteCourseButton from "@/components/DeleteCourseButton";
 
 export default async function AdminPage() {
   const { userId } = await auth();
@@ -112,11 +113,9 @@ export default async function AdminPage() {
                   <span className={`text-xs px-2 py-1 rounded-full border ${roleConfig[user.role]?.color}`}>
                     {roleConfig[user.role]?.label}
                   </span>
-                  {/* Кнопки смены роли — только для владельца */}
                   {isOwner && user.role !== "owner" && (
                     <RoleSelector userId={user.id} currentRole={user.role} />
                   )}
-                  {/* Администратор может менять только модераторов и ниже */}
                   {!isOwner && !["owner", "admin"].includes(user.role) && (
                     <RoleSelector userId={user.id} currentRole={user.role} limitedRoles />
                   )}
@@ -149,6 +148,7 @@ export default async function AdminPage() {
                     {course.status === "approved" ? "Одобрен" : course.status === "rejected" ? "Отклонён" : "На проверке"}
                   </span>
                   <span className="text-sm font-bold">{Number(course.price).toLocaleString("ru")} ₽</span>
+                  <DeleteCourseButton courseId={course.id} />
                 </div>
               </div>
             ))}
@@ -159,9 +159,9 @@ export default async function AdminPage() {
   );
 }
 
-function RoleSelector({ userId, currentRole, limitedRoles }: { 
-  userId: string; 
-  currentRole: string; 
+function RoleSelector({ userId, currentRole, limitedRoles }: {
+  userId: string;
+  currentRole: string;
   limitedRoles?: boolean;
 }) {
   const allRoles = limitedRoles
