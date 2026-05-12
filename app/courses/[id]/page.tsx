@@ -24,6 +24,27 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
     );
   }
 
+  // Проверяем куплен ли курс
+  let hasPurchased = false;
+  if (userId) {
+    const { data: dbUser } = await supabaseAdmin
+      .from("users")
+      .select("id")
+      .eq("clerk_id", userId)
+      .single();
+
+    if (dbUser) {
+      const { data: purchase } = await supabaseAdmin
+        .from("purchases")
+        .select("id")
+        .eq("user_id", dbUser.id)
+        .eq("course_id", id)
+        .single();
+
+      hasPurchased = !!purchase;
+    }
+  }
+
   const levelLabels: Record<string, string> = {
     beginner: "Начинающий",
     intermediate: "Средний",
@@ -81,7 +102,6 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
         {/* Левая колонка */}
         <div className="col-span-2 flex flex-col gap-4">
 
-          {/* Описание */}
           {course.description && (
             <p className="text-sm text-white/45 leading-relaxed">{course.description}</p>
           )}
@@ -154,20 +174,31 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
               <Link href="/sign-in" className="block w-full text-center py-3 rounded-xl bg-[#6c5ce7] hover:bg-[#5b4fd4] text-sm font-medium text-white transition mb-3">
                 Войдите чтобы купить
               </Link>
+            ) : hasPurchased ? (
+              <div className="mb-3 space-y-2">
+                <div className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 text-center">
+                  ✓ Курс куплен
+                </div>
+                {course.course_url && (
+                  <a href={course.course_url} target="_blank" rel="noopener noreferrer"
+                    className="block w-full text-center py-3 rounded-xl bg-[#6c5ce7] hover:bg-[#5b4fd4] text-sm font-medium text-white transition">
+                    Перейти к курсу →
+                  </a>
+                )}
+              </div>
             ) : (
               <Link href={`/courses/${course.id}/checkout`} className="block w-full text-center py-3 rounded-xl bg-[#6c5ce7] hover:bg-[#5b4fd4] text-sm font-medium text-white transition mb-3">
                 Купить курс →
               </Link>
             )}
 
-            {course.telegram_url && (
+            {course.telegram_url && hasPurchased && (
               <a href={course.telegram_url} target="_blank" rel="noopener noreferrer"
-                className="block w-full text-center py-2.5 rounded-xl bg-transparent border border-white/10 hover:bg-white/[0.05] text-sm text-white/50 transition">
+                className="block w-full text-center py-2.5 rounded-xl bg-transparent border border-white/10 hover:bg-white/[0.05] text-sm text-white/50 transition mb-3">
                 📱 Telegram-канал курса
               </a>
             )}
 
-            {/* Только заполненные поля */}
             {(course.duration || course.language) && (
               <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col gap-2.5">
                 {course.language && (
@@ -183,13 +214,6 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                   </div>
                 )}
               </div>
-            )}
-
-            {course.course_url && (
-              <a href={course.course_url} target="_blank" rel="noopener noreferrer"
-                className="mt-3 block w-full text-center py-2.5 rounded-xl bg-transparent border border-white/10 hover:bg-white/[0.05] text-sm text-white/50 transition">
-                🔗 Перейти к курсу
-              </a>
             )}
           </div>
         </div>
