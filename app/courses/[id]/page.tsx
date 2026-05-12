@@ -9,17 +9,16 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
 
   const { data: course, error } = await supabaseAdmin
     .from("courses")
-    .select("*")
+    .select("*, users!courses_teacher_id_fkey(name)")
     .eq("id", id)
     .single();
 
   if (!course || error) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#08080f] text-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Курс не найден</h1>
-          <p className="text-red-400 text-sm">{error?.message}</p>
-          <Link href="/" className="mt-4 inline-block text-purple-400">← Назад</Link>
+          <h1 className="text-2xl font-medium mb-2">Курс не найден</h1>
+          <Link href="/" className="mt-4 inline-block text-[#a89cf7] text-sm">← Назад в каталог</Link>
         </div>
       </div>
     );
@@ -33,125 +32,165 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
 
   const whatYouLearn = course.what_you_learn?.split("\n").filter(Boolean) || [];
   const requirements = course.requirements?.split("\n").filter(Boolean) || [];
+  const authorName = (course.users as any)?.name || "Автор";
+  const initials = authorName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <main className="min-h-screen bg-[#030303] text-white">
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
-        <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent">
-          Mano
+    <main className="min-h-screen bg-[#08080f] text-white">
+
+      {/* Навигация */}
+      <nav className="flex items-center justify-between px-7 h-[58px] border-b border-white/[0.06]">
+        <Link href="/" className="text-[20px] font-medium tracking-tight text-white">
+          Mano<span className="inline-block w-[6px] h-[6px] rounded-full bg-[#6c5ce7] ml-[2px] mb-[2px] align-middle" />
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-sm text-gray-400 hover:text-white transition">← Каталог</Link>
+          <Link href="/" className="text-sm text-white/35 hover:text-white/60 transition">← Каталог</Link>
           {userId ? (
             <>
-              <Link href="/profile" className="text-sm text-gray-400 hover:text-white transition">Профиль</Link>
+              <Link href="/profile" className="text-sm text-white/40 hover:text-white/70 transition">Мой кабинет</Link>
               <UserButton />
             </>
           ) : (
-            <>
-              <Link href="/sign-in" className="px-4 py-2 text-sm text-purple-300 border border-purple-600/50 rounded-lg hover:border-purple-400 transition">
-                Войти
-              </Link>
-              <Link href="/sign-up" className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded-lg transition">
-                Регистрация
-              </Link>
-            </>
+            <Link href="/sign-in" className="text-sm font-medium px-5 py-2 rounded-lg bg-[#6c5ce7] hover:bg-[#5b4fd4] text-white transition">
+              Войти
+            </Link>
           )}
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-8 py-12">
-        <div className="grid grid-cols-3 gap-8">
-          <div className="col-span-2 space-y-6">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-xs bg-purple-600/20 text-purple-300 px-3 py-1 rounded-full border border-purple-500/20">
-                  {course.category}
-                </span>
-                <span className="text-xs bg-white/5 text-gray-400 px-3 py-1 rounded-full border border-white/10">
-                  {levelLabels[course.level] || course.level}
-                </span>
+      {/* Hero */}
+      <div className="relative h-[200px] overflow-hidden bg-gradient-to-br from-[#1c1540] via-[#0d0c1f] to-[#08080f] flex items-end">
+        <div className="absolute inset-0 flex items-center justify-center text-[80px] opacity-30 select-none">📚</div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#08080f]" />
+        <div className="relative px-7 pb-6 w-full">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-medium px-2.5 py-1 rounded-md bg-[#6c5ce7]/20 text-[#a89cf7] border border-[#6c5ce7]/25">
+              {course.category}
+            </span>
+            <span className="text-[11px] px-2.5 py-1 rounded-md bg-white/[0.06] text-white/40 border border-white/10">
+              {levelLabels[course.level] || course.level}
+            </span>
+          </div>
+          <h1 className="text-2xl font-medium text-white leading-snug max-w-[600px]">{course.title}</h1>
+        </div>
+      </div>
+
+      {/* Контент */}
+      <div className="max-w-5xl mx-auto px-7 py-5 grid grid-cols-3 gap-5 items-start">
+
+        {/* Левая колонка */}
+        <div className="col-span-2 flex flex-col gap-4">
+
+          {/* Описание */}
+          {course.description && (
+            <p className="text-sm text-white/45 leading-relaxed">{course.description}</p>
+          )}
+
+          {/* Автор */}
+          <div className="rounded-2xl border border-white/[0.07] bg-[#10101a] p-5">
+            <h2 className="text-sm font-medium text-white mb-4">Автор курса</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#6c5ce7]/20 border border-[#6c5ce7]/30 flex items-center justify-center text-sm font-medium text-[#a89cf7]">
+                {initials}
               </div>
-              <h1 className="text-4xl font-bold mb-3">{course.title}</h1>
-              <p className="text-gray-300 text-lg leading-relaxed">{course.description}</p>
+              <div>
+                <div className="text-sm font-medium text-white">{authorName}</div>
+                <div className="text-xs text-white/35 mt-0.5">Автор курса</div>
+              </div>
             </div>
-
-            {course.full_description && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-xl font-bold mb-4">О курсе</h2>
-                <p className="text-gray-300 leading-relaxed whitespace-pre-line">{course.full_description}</p>
-              </div>
-            )}
-
-            {whatYouLearn.length > 0 && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-xl font-bold mb-4">Чему вы научитесь</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {whatYouLearn.map((item: string, i: number) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="text-green-400 mt-0.5 shrink-0">✓</span>
-                      <span className="text-gray-300 text-sm">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {requirements.length > 0 && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-xl font-bold mb-4">Требования</h2>
-                <ul className="space-y-2">
-                  {requirements.map((item: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-300 text-sm">
-                      <span className="text-yellow-400 mt-0.5">•</span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
 
-          <div className="col-span-1">
-            <div className="sticky top-8 bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
-              <div className="h-40 bg-gradient-to-br from-purple-900/50 to-indigo-900/50 rounded-xl flex items-center justify-center">
-                <div className="text-5xl">📚</div>
+          {/* О курсе */}
+          {course.full_description && (
+            <div className="rounded-2xl border border-white/[0.07] bg-[#10101a] p-5">
+              <h2 className="text-sm font-medium text-white mb-3">О курсе</h2>
+              <p className="text-sm text-white/45 leading-relaxed whitespace-pre-line">{course.full_description}</p>
+            </div>
+          )}
+
+          {/* Чему научитесь */}
+          {whatYouLearn.length > 0 && (
+            <div className="rounded-2xl border border-white/[0.07] bg-[#10101a] p-5">
+              <h2 className="text-sm font-medium text-white mb-4">Чему вы научитесь</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {whatYouLearn.map((item: string, i: number) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="text-emerald-400 text-xs mt-0.5 shrink-0">✓</span>
+                    <span className="text-sm text-white/50 leading-relaxed">{item}</span>
+                  </div>
+                ))}
               </div>
-              <div className="text-3xl font-bold">{Number(course.price).toLocaleString("ru")} ₽</div>
-              <div className="space-y-2 text-sm text-gray-400">
-                {course.duration && (
-                  <div className="flex justify-between">
-                    <span>Длительность</span>
-                    <span className="text-white">{course.duration}</span>
+            </div>
+          )}
+
+          {/* Требования */}
+          {requirements.length > 0 && (
+            <div className="rounded-2xl border border-white/[0.07] bg-[#10101a] p-5">
+              <h2 className="text-sm font-medium text-white mb-4">Требования</h2>
+              <div className="flex flex-col gap-2.5">
+                {requirements.map((item: string, i: number) => (
+                  <div key={i} className="flex items-start gap-2 text-sm text-white/50">
+                    <span className="text-amber-400 mt-0.5 shrink-0">•</span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Правая карточка */}
+        <div className="col-span-1 sticky top-5 rounded-2xl border border-white/[0.08] bg-[#10101a] overflow-hidden">
+          <div className="h-[120px] bg-gradient-to-br from-[#1c1540] to-[#0d0c1f] flex items-center justify-center text-5xl">
+            📚
+          </div>
+          <div className="p-5">
+            <div className="text-[28px] font-medium text-white leading-none mb-1">
+              {Number(course.price).toLocaleString("ru")} <span className="text-sm text-white/35 font-normal">₽</span>
+            </div>
+            <div className="text-xs text-white/30 mb-4">единоразовый платёж</div>
+
+            {!userId ? (
+              <Link href="/sign-in" className="block w-full text-center py-3 rounded-xl bg-[#6c5ce7] hover:bg-[#5b4fd4] text-sm font-medium text-white transition mb-3">
+                Войдите чтобы купить
+              </Link>
+            ) : (
+              <Link href={`/courses/${course.id}/checkout`} className="block w-full text-center py-3 rounded-xl bg-[#6c5ce7] hover:bg-[#5b4fd4] text-sm font-medium text-white transition mb-3">
+                Купить курс →
+              </Link>
+            )}
+
+            {course.telegram_url && (
+              <a href={course.telegram_url} target="_blank" rel="noopener noreferrer"
+                className="block w-full text-center py-2.5 rounded-xl bg-transparent border border-white/10 hover:bg-white/[0.05] text-sm text-white/50 transition">
+                📱 Telegram-канал курса
+              </a>
+            )}
+
+            {/* Только заполненные поля */}
+            {(course.duration || course.language) && (
+              <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col gap-2.5">
+                {course.language && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-white/30">Язык</span>
+                    <span className="text-xs text-white/65">{course.language}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Уровень</span>
-                  <span className="text-white">{levelLabels[course.level]}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Язык</span>
-                  <span className="text-white">{course.language || "Русский"}</span>
-                </div>
-              </div>
-              <div className="border-t border-white/10 pt-4">
-                {!userId ? (
-                  <Link href="/sign-up" className="block w-full text-center py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold transition">
-                    Войдите чтобы купить
-                  </Link>
-                ) : (
-                  <Link href={`/courses/${course.id}/checkout`} className="block w-full text-center py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold transition">
-                    Купить за {Number(course.price).toLocaleString("ru")} ₽
-                  </Link>
+                {course.duration && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-white/30">Длительность</span>
+                    <span className="text-xs text-white/65">{course.duration}</span>
+                  </div>
                 )}
               </div>
-              {course.telegram_url && (
-                <a href={course.telegram_url} target="_blank" rel="noopener noreferrer"
-                  className="block w-full text-center py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm transition">
-                  📱 Telegram-канал курса
-                </a>
-              )}
-            </div>
+            )}
+
+            {course.course_url && (
+              <a href={course.course_url} target="_blank" rel="noopener noreferrer"
+                className="mt-3 block w-full text-center py-2.5 rounded-xl bg-transparent border border-white/10 hover:bg-white/[0.05] text-sm text-white/50 transition">
+                🔗 Перейти к курсу
+              </a>
+            )}
           </div>
         </div>
       </div>
