@@ -4,16 +4,14 @@ import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { supabaseAdmin } from "@/lib/supabase";
 import ProButton from "./ProButton";
+import ProfileHeader from "@/components/ProfileHeader";
 
 export default async function ProfilePage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
   let { data: user } = await supabaseAdmin
-    .from("users")
-    .select("*")
-    .eq("clerk_id", userId)
-    .single();
+    .from("users").select("*").eq("clerk_id", userId).single();
 
   if (!user) {
     const { currentUser } = await import("@clerk/nextjs/server");
@@ -27,29 +25,21 @@ export default async function ProfilePage() {
           name: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || "Без имени",
           role: "student",
         })
-        .select("*")
-        .single();
+        .select("*").single();
       user = newUser;
     }
   }
 
   const { data: purchasedCourses } = await supabaseAdmin
-    .from("purchases")
-    .select("*, courses(*)")
-    .eq("user_id", user?.id);
+    .from("purchases").select("*, courses(*)").eq("user_id", user?.id);
 
   const { data: myCourses } = await supabaseAdmin
-    .from("courses")
-    .select("*")
-    .eq("teacher_id", user?.id)
-    .order("created_at", { ascending: false });
+    .from("courses").select("*").eq("teacher_id", user?.id).order("created_at", { ascending: false });
 
   const coursesWithSales = await Promise.all(
     (myCourses || []).map(async (course) => {
       const { count } = await supabaseAdmin
-        .from("purchases")
-        .select("*", { count: "exact", head: true })
-        .eq("course_id", course.id);
+        .from("purchases").select("*", { count: "exact", head: true }).eq("course_id", course.id);
       return { ...course, sales: count || 0 };
     })
   );
@@ -63,203 +53,131 @@ export default async function ProfilePage() {
   };
 
   const statusConfig: Record<string, { label: string; color: string }> = {
-    pending: { label: "На проверке", color: "bg-yellow-600/20 text-yellow-300 border-yellow-500/20" },
-    approved: { label: "Одобрен", color: "bg-green-600/20 text-green-300 border-green-500/20" },
-    rejected: { label: "Отклонён", color: "bg-red-600/20 text-red-300 border-red-500/20" },
+    pending: { label: "На проверке", color: "bg-yellow-500/10 text-yellow-300 border-yellow-500/20" },
+    approved: { label: "Одобрен", color: "bg-emerald-500/10 text-emerald-300 border-emerald-500/20" },
+    rejected: { label: "Отклонён", color: "bg-red-500/10 text-red-300 border-red-500/20" },
   };
 
   const isAuthor = ["author", "author_pro", "moderator", "admin", "owner"].includes(user?.role);
   const isPro = ["author_pro", "moderator", "admin", "owner"].includes(user?.role);
 
   return (
-    <main className="min-h-screen bg-[#030303] text-white">
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-white/5">
-        <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-white to-purple-400 bg-clip-text text-transparent">
-          Mano
+    <main className="min-h-screen bg-[#08080f] text-white">
+      <nav className="flex items-center justify-between px-7 h-[58px] border-b border-white/[0.06]">
+        <Link href="/" className="text-[20px] font-medium tracking-tight text-white">
+          Mano<span className="inline-block w-[6px] h-[6px] rounded-full bg-[#6c5ce7] ml-[2px] mb-[2px] align-middle" />
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-sm text-gray-400 hover:text-white transition">Каталог</Link>
-          <Link href="/submit" className="px-4 py-2 text-sm bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg transition text-white font-medium">
-            Предложить курс
-          </Link>
+          <Link href="/" className="text-sm text-white/40 hover:text-white/70 transition">← Каталог</Link>
+          <Link href="/submit" className="text-sm text-white/40 hover:text-white/70 transition">Предложить курс</Link>
           <UserButton />
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-8 py-12 space-y-6">
+      <div className="max-w-4xl mx-auto px-7 py-6 flex flex-col gap-5">
 
-        {/* Шапка */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 flex items-center gap-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-600/50 to-indigo-600/50 border-2 border-purple-500/40 flex items-center justify-center text-3xl font-bold text-purple-200 shrink-0">
-            {user?.name?.[0]?.toUpperCase() || "?"}
+        {/* Шапка профиля */}
+        <ProfileHeader
+          user={{ name: user?.name || "", email: user?.email || "", role: user?.role || "" }}
+          isPro={isPro}
+          roleLabel={roleLabels[user?.role] || user?.role}
+        />
+
+        {/* Статистика */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-[14px] border border-white/[0.07] bg-[#10101a] px-5 py-4">
+            <div className="text-xs text-white/30 mb-2">Всего продаж</div>
+            <div className="text-[26px] font-medium text-[#a89cf7]">{totalSales}</div>
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold mb-1">{user?.name || "Без имени"}</h1>
-            <p className="text-gray-400 text-sm mb-3">{user?.email}</p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs bg-purple-600/20 text-purple-300 px-3 py-1 rounded-full border border-purple-500/20">
-                {roleLabels[user?.role] || user?.role}
-              </span>
-              {isPro && (
-                <span className="text-xs bg-gradient-to-r from-yellow-600/20 to-orange-600/20 text-yellow-300 px-3 py-1 rounded-full border border-yellow-500/20">
-                  ⭐ Pro
-                </span>
-              )}
-              {["admin", "owner"].includes(user?.role) && (
-                <Link href="/admin" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
-                  ⚙️ Панель управления
-                </Link>
-              )}
-              {["moderator", "admin", "owner"].includes(user?.role) && (
-                <Link href="/moderation" className="text-xs px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
-                  🛡️ Модерация
-                </Link>
-              )}
+          <div className="rounded-[14px] border border-white/[0.07] bg-[#10101a] px-5 py-4">
+            <div className="text-xs text-white/30 mb-2">Выручка</div>
+            <div className="text-[26px] font-medium text-emerald-400">{totalRevenue.toLocaleString("ru")} ₽</div>
+          </div>
+          <div className="rounded-[14px] border border-white/[0.07] bg-[#10101a] px-5 py-4">
+            <div className="text-xs text-white/30 mb-2">Куплено курсов</div>
+            <div className="text-[26px] font-medium text-white">{purchasedCourses?.length || 0}</div>
+          </div>
+        </div>
+
+        {/* Мои курсы */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-white">Мои курсы</h2>
+            <Link href="/submit" className="text-xs text-[#a89cf7] hover:text-white transition">+ Добавить курс</Link>
+          </div>
+
+          {!myCourses || myCourses.length === 0 ? (
+            <div className="text-center py-10 rounded-2xl border border-white/[0.07] bg-[#10101a]">
+              <div className="text-4xl mb-3">🎓</div>
+              <p className="text-sm text-white/35 mb-4">У вас пока нет курсов</p>
+              <Link href="/submit" className="px-5 py-2 bg-[#6c5ce7] hover:bg-[#5b4fd4] rounded-xl text-sm font-medium transition">
+                Создать курс
+              </Link>
             </div>
-          </div>
-          {!isPro && (
-            <div className="text-right shrink-0">
-              <div className="text-xs text-gray-500 mb-2">Расширенная аналитика и приоритет</div>
-              <ProButton />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {coursesWithSales.map((course) => (
+                <div key={course.id} className="rounded-[12px] border border-white/[0.07] bg-[#10101a] px-5 py-4 flex items-center justify-between hover:border-white/[0.12] transition">
+                  <div>
+                    <div className="text-sm font-medium text-white/85 mb-2">{course.title}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-white/30">{course.category}</span>
+                      <span className="text-[11px] font-medium text-white/55">{Number(course.price).toLocaleString("ru")} ₽</span>
+                      <span className={`text-[11px] px-2 py-0.5 rounded-md border ${statusConfig[course.status]?.color}`}>
+                        {statusConfig[course.status]?.label}
+                      </span>
+                    </div>
+                  </div>
+                  {course.status === "approved" && (
+                    <div className="flex gap-5 text-right shrink-0 ml-4">
+                      <div>
+                        <div className="text-[11px] text-white/25 mb-1">Продаж</div>
+                        <div className="text-[15px] font-medium text-white">{course.sales}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-white/25 mb-1">Выручка</div>
+                        <div className="text-[15px] font-medium text-emerald-400">{(course.sales * Number(course.price)).toLocaleString("ru")} ₽</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
 
         {/* Купленные курсы */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-purple-500/30 transition">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="text-gray-400 text-sm mb-1">Куплено курсов</div>
-              <div className="text-4xl font-bold text-purple-400">{purchasedCourses?.length || 0}</div>
+        {purchasedCourses && purchasedCourses.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-white">Купленные курсы</h2>
             </div>
-            <Link href="#purchased" className="text-sm text-purple-400 hover:text-purple-300 transition">
-              Смотреть все →
-            </Link>
-          </div>
-          {purchasedCourses && purchasedCourses.length > 0 && (
-            <div className="flex gap-3 flex-wrap mt-2">
-              {purchasedCourses.slice(0, 3).map((p: any) => (
+            <div className="grid grid-cols-2 gap-3">
+              {purchasedCourses.map((p: any) => (
                 <Link key={p.id} href={`/courses/${p.courses?.id}`}
-                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm hover:border-purple-500/40 transition">
-                  {p.courses?.title}
+                  className="rounded-[12px] border border-white/[0.07] bg-[#10101a] px-4 py-3.5 hover:border-[#6c5ce7]/30 transition">
+                  <div className="text-sm font-medium text-white/80 mb-1">{p.courses?.title}</div>
+                  <div className="text-[11px] text-white/30">{p.courses?.category} · {Number(p.courses?.price).toLocaleString("ru")} ₽</div>
                 </Link>
               ))}
-              {purchasedCourses.length > 3 && (
-                <span className="px-3 py-1.5 text-gray-500 text-sm">+{purchasedCourses.length - 3} ещё</span>
-              )}
             </div>
-          )}
-        </div>
-
-        {/* Мои курсы */}
-        <div id="mycourses">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Мои курсы</h2>
-            <Link href="/submit" className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 rounded-xl transition font-medium">
-              + Добавить курс
-            </Link>
           </div>
+        )}
 
-          {isAuthor && coursesWithSales.length > 0 && (
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="text-gray-400 text-xs mb-1">Всего продаж</div>
-                <div className="text-2xl font-bold text-white">{totalSales}</div>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="text-gray-400 text-xs mb-1">Выручка</div>
-                <div className="text-2xl font-bold text-white">{totalRevenue.toLocaleString("ru")} ₽</div>
-              </div>
-              <div className={`rounded-xl p-4 border ${isPro ? "bg-yellow-600/10 border-yellow-500/20" : "bg-white/5 border-white/10"}`}>
-                <div className="text-gray-400 text-xs mb-1">Курсов опубликовано</div>
-                <div className="text-2xl font-bold text-white">
-                  {coursesWithSales.filter(c => c.status === "approved").length}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {!myCourses || myCourses.length === 0 ? (
-            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-              <div className="text-4xl mb-3">🎓</div>
-              <p className="text-gray-400 mb-4">У вас пока нет курсов</p>
-              <Link href="/submit" className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-xl text-sm font-semibold transition">
-                Создать курс
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {coursesWithSales.map((course) => (
-                <div key={course.id} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-purple-500/30 transition">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-bold text-lg">{course.title}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${statusConfig[course.status]?.color}`}>
-                          {statusConfig[course.status]?.label}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
-                        <span>{course.category}</span>
-                        <span>{course.level}</span>
-                        <span className="text-white font-semibold">{Number(course.price).toLocaleString("ru")} ₽</span>
-                      </div>
-                    </div>
-                    {course.status === "approved" && (
-                      <div className="flex gap-6 ml-6 text-right">
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Продаж</div>
-                          <div className="text-xl font-bold text-white">{course.sales}</div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Выручка</div>
-                          <div className="text-xl font-bold text-purple-400">
-                            {(course.sales * Number(course.price)).toLocaleString("ru")} ₽
-                          </div>
-                        </div>
-                        {!isPro && (
-                          <div className="flex items-center">
-                            <div className="text-center">
-                              <div className="text-xs text-gray-500 mb-1">Детальная аналитика</div>
-                              <span className="text-xs px-3 py-1 bg-gradient-to-r from-yellow-600/30 to-orange-600/30 border border-yellow-500/30 text-yellow-300 rounded-lg">
-                                ⭐ Pro
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                        {isPro && (
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">Конверсия</div>
-                            <div className="text-xl font-bold text-green-400">—</div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Блок Pro */}
+        {/* Pro баннер */}
         {!isPro && (
-          <div className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-500/20 rounded-2xl p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold mb-2">⭐ Автор Pro</h3>
-                <ul className="text-sm text-gray-300 space-y-1">
-                  <li>✓ Детальная аналитика продаж</li>
-                  <li>✓ График доходов по дням</li>
-                  <li>✓ Данные о покупателях</li>
-                  <li>✓ Приоритет в каталоге</li>
-                  <li>✓ Расширенная страница курса</li>
-                </ul>
+          <div className="rounded-[14px] border border-yellow-500/20 bg-gradient-to-br from-yellow-500/[0.06] to-orange-500/[0.04] px-6 py-5 flex items-center justify-between">
+            <div>
+              <div className="text-[15px] font-medium text-yellow-300 mb-3">⭐ Author Pro</div>
+              <div className="flex flex-col gap-1.5">
+                {["Неограниченное количество курсов", "Детальная аналитика продаж", "Приоритет в каталоге", "Данные о покупателях"].map(f => (
+                  <div key={f} className="text-xs text-white/40"><span className="text-emerald-400 mr-2">✓</span>{f}</div>
+                ))}
               </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold mb-3">4 490 ₽<span className="text-gray-400 text-lg">/мес</span></div>
-                <ProButton />
-              </div>
+            </div>
+            <div className="text-right shrink-0 ml-6">
+              <div className="text-[22px] font-medium text-white mb-3">4 490 <span className="text-sm text-white/35 font-normal">₽/мес</span></div>
+              <ProButton />
             </div>
           </div>
         )}
