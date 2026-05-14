@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import EditProfileModal from "./EditProfileModal";
-import ThemeToggle from "./ThemeToggle";
 import Link from "next/link";
 
 interface Props {
@@ -20,10 +19,7 @@ export default function ProfileHeader({ user, isPro, roleLabel }: Props) {
       {modalOpen && <EditProfileModal user={user} onClose={() => setModalOpen(false)} />}
 
       <div className="rounded-[18px] border border-white/[0.07] bg-[#10101a] p-6 relative">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-
+        
         <div className="flex items-center gap-5">
           <button onClick={() => setModalOpen(true)} className="relative shrink-0 group" title="Редактировать профиль">
             <div className="w-16 h-16 rounded-2xl bg-[#6c5ce7]/20 border border-[#6c5ce7]/30 flex items-center justify-center text-xl font-medium text-[#a89cf7] group-hover:border-[#6c5ce7]/70 transition">
