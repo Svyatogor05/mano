@@ -53,8 +53,8 @@ export default function SubmitPage() {
   const isStep1Valid = form.title && form.description && form.price;
   const isStep2Valid = form.course_url && form.what_you_learn;
 
-  const inputClass = "w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#6c5ce7]/50 transition";
-  const labelClass = "text-xs text-white/40 mb-1.5 block";
+  const inputClass = "w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-base text-white placeholder-white/20 focus:outline-none focus:border-[#6c5ce7]/50 transition";
+const labelClass = "text-sm text-white/50 mb-2 block font-medium";
 
   return (
     <main className="min-h-screen bg-[#08080f] text-white">
@@ -68,8 +68,8 @@ export default function SubmitPage() {
       <div className="max-w-xl mx-auto px-7 py-8">
 
         <div className="mb-6">
-          <h1 className="text-xl font-medium text-white mb-1">Предложить курс</h1>
-          <p className="text-sm text-white/35">Модератор проверит каждый пункт — указывайте только реальную информацию</p>
+          <h1 className="text-2xl font-medium text-white mb-1">Предложить курс</h1>
+          <p className="text-sm text-white/40">Модератор проверит каждый пункт — указывайте только реальную информацию</p>
         </div>
 
         {/* Шаги */}
